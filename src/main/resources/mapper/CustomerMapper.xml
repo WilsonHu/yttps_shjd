@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.eservice.iot.dao.CustomerMapper">
+  <resultMap id="BaseResultMap" type="com.eservice.iot.model.customer.Customer">
+    <!--
+      WARNING - @mbg.generated
+    -->
+    <id column="id" jdbcType="INTEGER" property="id" />
+    <result column="create_time" jdbcType="TIMESTAMP" property="createTime" />
+    <result column="update_time" jdbcType="TIMESTAMP" property="updateTime" />
+    <result column="customer_name" jdbcType="LONGVARCHAR" property="customerName" />
+  </resultMap>
+
+  <select id="search" resultMap="BaseResultMap">
+    SELECT * FROM customer where 1=1
+    <if test="customer_name != null and customer_name != ''">
+      and customer_name like CONCAT('%','${customer_name}','%' )
+    </if>
+  </select>
+</mapper>
