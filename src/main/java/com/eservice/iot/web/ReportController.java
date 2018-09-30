@@ -129,12 +129,34 @@ public class ReportController {
                             if(!tmpList.get(i).getMeta().isPassed()) {
                                 continue;
                             }
-                            if (i == 0) {
-                                resultList.add(insertIDInfo(tmpList.get(i)));
+                            WinVisitorRecord record = insertIDInfo(tmpList.get(i));
+                            if (resultList.size() == 0) {
+                                if(record != null) {
+                                    resultList.add(record);
+                                }
                             } else {
-                                //如果记录中前一条是同一个person,则不插入
-                                if (tmpList.get(i).getPerson_id() != resultList.get(resultList.size() - 1).getPerson_id()) {
-                                    resultList.add(insertIDInfo(tmpList.get(i)));
+                                try {
+                                    //如果记录中前一条是同一个person且不再同一天,则不插入
+
+                                    boolean needInsert = false;
+                                    if(tmpList.get(i).getPerson_id() != resultList.get(resultList.size() - 1).getPerson_id()) {
+                                        //TODO:去重逻辑还欠缺
+                                        needInsert = true;
+                                    } else {
+                                        //不在同一天
+                                        Date date1 = new Date(tmpList.get(i).getCreate_timestamp()*1000);
+                                        Date date2 = new Date(resultList.get(resultList.size() - 1).getCreate_timestamp() *1000);
+                                        if(date1.getDay() != date2.getDay()) {
+                                            needInsert = true;
+                                        }
+                                    }
+                                    if (needInsert) {
+                                        if(record != null) {
+                                            resultList.add(record);
+                                        }
+                                    }
+                                } catch (Exception e) {
+                                    logger.error(e.getMessage());
                                 }
                             }
                         }
