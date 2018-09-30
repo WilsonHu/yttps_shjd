@@ -142,6 +142,8 @@ public class WinVisitorRecord {
         private String cardId;
         private String name;
         private boolean passed;
+        private String department;
+        private String external_id;
 
         public String getCardId() {
             return cardId;
@@ -165,6 +167,22 @@ public class WinVisitorRecord {
 
         public void setPassed(boolean passed) {
             this.passed = passed;
+        }
+
+        public String getDepartment() {
+            return department;
+        }
+
+        public void setDepartment(String department) {
+            this.department = department;
+        }
+
+        public String getExternal_id() {
+            return external_id;
+        }
+
+        public void setExternal_id(String external_id) {
+            this.external_id = external_id;
         }
     }
 }

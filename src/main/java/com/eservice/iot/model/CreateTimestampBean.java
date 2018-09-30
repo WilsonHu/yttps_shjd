@@ -12,6 +12,7 @@ public class CreateTimestampBean {
      */
 
     private long gte;
+    private long lte;
 
     public long getGte() {
         return gte;
@@ -19,5 +20,13 @@ public class CreateTimestampBean {
 
     public void setGte(long gte) {
         this.gte = gte;
+    }
+
+    public long getLte() {
+        return lte;
+    }
+
+    public void setLte(long lte) {
+        this.lte = lte;
     }
 }
