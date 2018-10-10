@@ -94,7 +94,9 @@ public class ReportController {
         //记录开始时间
         try {
             startDate = formatter2.parse(kqStartDt);
-            endDate = formatter2.parse(kqEndDt);
+            Date tmp = formatter2.parse(kqEndDt);
+            ///结束时间为23:59
+            endDate = new Date(tmp.getTime() + (1000 * 60 * 60 * 24) - 1);
         } catch (ParseException e) {
             e.printStackTrace();
             return "开始或结束时间格式错误！";
@@ -167,7 +169,7 @@ public class ReportController {
                                 if(resultList.get(i).getMeta().getCardId() == null || resultList.get(i).getMeta().getCardId().equals("")) {
                                     logger.error("编号为空 ==> 姓名 : {}, 部门 ： {}, 编号: {}", resultList.get(i).getMeta().getName(), resultList.get(i).getMeta().getDepartment(), resultList.get(i).getMeta().getExternal_id());
                                 } else {
-                                    resultStr += resultList.get(i).getMeta().getCardId() + "#" + formatter.format(new Date(resultList.get(i).getCreate_timestamp()*1000)) + " ";
+                                    resultStr += resultList.get(i).getMeta().getCardId() + "#" + formatter.format(new Date(resultList.get(i).getCreate_timestamp()*1000)) + "; ";
                                 }
                             }
                             //Generate excel report
@@ -182,6 +184,8 @@ public class ReportController {
                             });
                         }
                         return resultStr;
+                    } else {
+                        return "无考勤记录！";
                     }
                 }
             }
@@ -198,7 +202,7 @@ public class ReportController {
             }
         }
         if (record == null) {
-            logger.error("刷脸记录没找到对应员工 ==> 名字：{}, ID: {}", tmp.getMeta().getName(), tmp.getPerson_id());
+            logger.error("刷脸记录没找到对应员工 ==> 名字：{}, ID: {}, 时间: {}", tmp.getMeta().getName(), tmp.getPerson_id(), formatter.format(new Date(tmp.getCreate_timestamp()*1000)));
         }
         return record;
     }
