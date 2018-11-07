@@ -77,7 +77,7 @@ public class ReportController {
     private ThreadPoolTaskExecutor mExecutor;
 
     @GetMapping("/checktime")
-    public String checkTime(@RequestParam String kqStartDt, @RequestParam String kqEndDt) {
+    public String checkTime(String kqStartDt, String kqEndDt, String ID) {
 
         token = tokenService.getToken();
         HashMap<String, Object> postParameters = new HashMap<>();
@@ -89,22 +89,24 @@ public class ReportController {
         condition.setType(2);
         RepoIdBean idBean = new RepoIdBean();
         condition.setRepo_id(idBean);
-        Date startDate;
-        Date endDate;
-        //记录开始时间
-        try {
-            startDate = formatter2.parse(kqStartDt);
-            Date tmp = formatter2.parse(kqEndDt);
-            ///结束时间为23:59
-            endDate = new Date(tmp.getTime() + (1000 * 60 * 60 * 24) - 1);
-        } catch (ParseException e) {
-            e.printStackTrace();
-            return "开始或结束时间格式错误！";
+        if (ID == null) {
+            Date startDate;
+            Date endDate;
+            //记录开始时间
+            try {
+                startDate = formatter2.parse(kqStartDt);
+                Date tmp = formatter2.parse(kqEndDt);
+                ///结束时间为23:59
+                endDate = new Date(tmp.getTime() + (1000 * 60 * 60 * 24) - 1);
+            } catch (ParseException e) {
+                e.printStackTrace();
+                return "开始或结束时间格式错误！";
+            }
+            CreateTimestampBean timestampBean = new CreateTimestampBean();
+            timestampBean.setGte(startDate.getTime() / 1000);
+            timestampBean.setLte(endDate.getTime() / 1000);
+            condition.setCreate_timestamp(timestampBean);
         }
-        CreateTimestampBean timestampBean = new CreateTimestampBean();
-        timestampBean.setGte(startDate.getTime() / 1000);
-        timestampBean.setLte(endDate.getTime() / 1000);
-        condition.setCreate_timestamp(timestampBean);
 
         postParameters.put("condition", condition);
         HttpHeaders headers = new HttpHeaders();
@@ -128,12 +130,12 @@ public class ReportController {
                         //remove the same data firstly
                         for (int i = 0; i < tmpList.size(); i++) {
                             //去除刷脸不通过得到记录
-                            if(!tmpList.get(i).getMeta().isPassed()) {
+                            if (!tmpList.get(i).getMeta().isPassed()) {
                                 continue;
                             }
                             WinVisitorRecord record = insertIDInfo(tmpList.get(i));
                             if (resultList.size() == 0) {
-                                if(record != null) {
+                                if (record != null) {
                                     resultList.add(record);
                                 }
                             } else {
@@ -141,19 +143,19 @@ public class ReportController {
                                     //如果记录中前一条是同一个person且不再同一天,则不插入
 
                                     boolean needInsert = false;
-                                    if(tmpList.get(i).getPerson_id() != resultList.get(resultList.size() - 1).getPerson_id()) {
+                                    if (tmpList.get(i).getPerson_id() != resultList.get(resultList.size() - 1).getPerson_id()) {
                                         //TODO:去重逻辑还欠缺
                                         needInsert = true;
                                     } else {
                                         //不在同一天
-                                        Date date1 = new Date(tmpList.get(i).getCreate_timestamp()*1000);
-                                        Date date2 = new Date(resultList.get(resultList.size() - 1).getCreate_timestamp() *1000);
-                                        if(date1.getDay() != date2.getDay()) {
+                                        Date date1 = new Date(tmpList.get(i).getCreate_timestamp() * 1000);
+                                        Date date2 = new Date(resultList.get(resultList.size() - 1).getCreate_timestamp() * 1000);
+                                        if (date1.getDay() != date2.getDay()) {
                                             needInsert = true;
                                         }
                                     }
                                     if (needInsert) {
-                                        if(record != null) {
+                                        if (record != null) {
                                             resultList.add(record);
                                         }
                                     }
@@ -166,22 +168,31 @@ public class ReportController {
                         String resultStr = "";
                         if (resultList.size() > 0) {
                             for (int i = 0; i < resultList.size(); i++) {
-                                if(resultList.get(i).getMeta().getCardId() == null || resultList.get(i).getMeta().getCardId().equals("")) {
+                                if (resultList.get(i).getMeta().getCardId() == null || resultList.get(i).getMeta().getCardId().equals("")) {
                                     logger.error("编号为空 ==> 姓名 : {}, 部门 ： {}, 编号: {}", resultList.get(i).getMeta().getName(), resultList.get(i).getMeta().getDepartment(), resultList.get(i).getMeta().getExternal_id());
                                 } else {
-                                    resultStr += resultList.get(i).getMeta().getCardId() + "#" + formatter.format(new Date(resultList.get(i).getCreate_timestamp()*1000)) + "; ";
+                                    if (ID == null) {
+                                        resultStr += resultList.get(i).getMeta().getCardId() + "#" + formatter.format(new Date(resultList.get(i).getCreate_timestamp() * 1000)) + "; ";
+                                    } else {
+                                        if(ID.equals(resultList.get(i).getMeta().getCardId())) {
+                                            resultStr += formatter.format(new Date(resultList.get(i).getCreate_timestamp() * 1000)) + "; \n";
+                                        }
+                                    }
                                 }
                             }
-                            //Generate excel report
-                            if (mExecutor == null) {
-                                initExecutor();
-                            }
-                            mExecutor.execute(new Runnable() {
-                                @Override
-                                public void run() {
-                                    generateExcelReport(resultList);
+
+                            if (ID == null) {
+                                //Generate excel report
+                                if (mExecutor == null) {
+                                    initExecutor();
                                 }
-                            });
+                                mExecutor.execute(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        generateExcelReport(resultList);
+                                    }
+                                });
+                            }
                         }
                         return resultStr;
                     } else {
@@ -202,7 +213,7 @@ public class ReportController {
             }
         }
         if (record == null) {
-            logger.error("刷脸记录没找到对应员工 ==> 名字：{}, ID: {}, 时间: {}", tmp.getMeta().getName(), tmp.getPerson_id(), formatter.format(new Date(tmp.getCreate_timestamp()*1000)));
+            logger.error("刷脸记录没找到对应员工 ==> 名字：{}, ID: {}, 时间: {}", tmp.getMeta().getName(), tmp.getPerson_id(), formatter.format(new Date(tmp.getCreate_timestamp() * 1000)));
         }
         return record;
     }
