@@ -3,6 +3,8 @@ package com.eservice.iot;
 import com.eservice.iot.service.TokenService;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
+import org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.http.converter.HttpMessageConverter;
@@ -18,7 +20,7 @@ import java.util.List;
  * @author HT
  */
 @EnableScheduling
-@SpringBootApplication
+@SpringBootApplication(exclude={DataSourceAutoConfiguration.class,HibernateJpaAutoConfiguration.class})
 @ComponentScan
 public class IotApplication {
 
